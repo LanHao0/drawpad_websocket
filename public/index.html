@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta charset="utf-8">
+    <title>兰兰想的网页涂鸦</title>
+    <meta name="Keywords" content="网页图画板,涂鸦板,涂鸦,画图,网页涂鸦,兰兰想,兰兰想的工具"/>
+    <meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=0.8, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"></script>
+    <script src="https://www.lanhaoo.club/tools/FileSaver.js"></script>
+
+    <style>
+        body {
+            margin: 0px;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body onLoad="start();">
+<div id="canvavas">
+    <canvas id="canvadrawing" style="border:solid 1px #000;"></canvas>
+
+    <div class="row">
+        <div class="col-2">
+            <input class="btn btn-warning" id="undo" type="button" onClick="canvasUndo();" value="撤销"/>
+
+        </div>
+        <div class="col-2">
+            <input class="btn btn-primary" id="redo" type="button" onClick="canvasRedo();" value="重做"/>
+
+        </div>
+        <div class="col-2">
+            <input type="range" min="1" max="80" id="brush-size" value="5"/>
+
+        </div>
+        <div class="col-2">
+            <input id="brush_S" type="number" value="5" style="width:40px;"/>
+
+        </div>
+        <div class="col-2">
+            <input id="B_color" type="color" style="width:40px;"/>
+
+        </div>
+        <div class="col-2">
+            <input type="button" class="btn btn-secondary" onClick="openModal();" value="更多"/>
+
+        </div>
+    </div>
+    <!-- Button trigger modal -->
+
+</div>
+
+
+<div style="display: none;">
+    <span id="arrayX"></span><br>
+    <span id="arrayY"></span><br>
+    <span id="arrayDRAG"></span><br>
+    <span id="arrayTime"></span>
+</div>
+
+<!-- Bootstraps modal -->
+<div class="modal fade" id="more_Modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-body">
+
+                <nav>
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home"
+                           role="tab" aria-controls="nav-home" aria-selected="true">功能</a>
+                        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-profile"
+                           role="tab" aria-controls="nav-profile" aria-selected="false"
+                           onClick="show_support();">支持浏览器</a>
+                        <a class="nav-item nav-link" id="nav-good_drawing-tab" data-toggle="tab"
+                           href="#nav-good_drawing" role="tab" aria-controls="nav-contact"
+                           aria-selected="false">欣赏作品</a>
+                        <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact"
+                           role="tab" aria-controls="nav-contact" aria-selected="false">关于</a>
+
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+
+                        <br>
+                        <div class="alert alert-warning collapse fade" role="alert" id="alert_export_success">
+                            绘画数据下载不耗费流量！
+                        </div>
+
+                        阴影颜色：<input id="shadow_color" type="color" style="width:40px;"/>
+                        阴影模糊：<input id="brush_shadow_blur" type="number" value="0" style="width:40px;"/>,
+                        x：<input id="brush_shadow_x" type="number" value="0" style="width:40px;"/>
+                        y：<input id="brush_shadow_y" type="number" value="0" style="width:40px;"/><br>
+                        <div class="row">
+                            <div class="col-4">
+                                画笔选择
+                            </div>
+                            <div class="col">
+                                <select id="brush_select" class="form-control">
+                                    <option>原画笔</option>
+                                    <option>彩虹画笔</option>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <hr>
+                        <input id="clear" type="button" class="btn btn-primary" onClick="clean();hide_moremodal();"
+                               value="清空画布"/>
+                        <input id="replay" type="button" class="btn btn-primary"
+                               onClick="replay_canvas();hide_moremodal();" value="回放"/>
+                        <input id="export_draw_data" type="button" class="btn btn-primary"
+                               onclick="export_draw_data();show_alert_success_export();" value="导出绘画数据"/>
+                        <input type="button" id="save_img" class="btn btn-primary" onClick="save_img();" value="保存图像"/>
+                        <br> <br>
+                        <div class="row">
+                            <div class="col">
+                                <input type="button" class="btn btn-primary"
+                                       onClick="change_color_style();hide_moremodal();" value="改变颜色风格"/>
+                            </div>
+                            <div class="col">
+                                <select class="form-control" id="random_color">
+                                    <option>恢复原状</option>
+                                    <option>完全随机</option>
+                                    <option>清新风格</option>
+                                    <option>复古旧派</option>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <br>
+                        <!--				  <br>
+                                             <div class="container">
+                                                <div class="row">
+                                                    <div class="col">
+
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="checkbox" id="is_transparent" class="form-check-input" checked/>
+                                                        <label for="is_transparent" class="form-check-label">是否背景透明?(已上色背景无法透明)</label>
+                                                    </div>
+                                                </div>
+
+                                              </div>-->
+                        <hr>
+                        <label for="import_draw_data" class="btn btn-primary" id="upload_button">导入绘画数据</label>
+                        <input id="import_draw_data" type="file" onChange="PreviewText();" style="display: none"/>
+
+                        <hr>
+
+                        <div style="display:none">
+                            <p>绘画数据↓↓</p>
+                            <textarea id="draw_data" type="text"></textarea>
+                        </div>
+
+                    </div>
+                    <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+                        <script>
+                            function show_support() {
+                                $.ajax({
+                                    url: './drawing/support.html', success: function (data) {
+                                        document.getElementById('nav-profile').innerHTML = data;
+                                        document.getElementById('nav-profile-tab').setAttribute("onClick", "");
+                                    }
+                                });
+                            }
+
+                        </script>
+
+                    </div>
+                    <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
+                        <br>
+                        <p>作者：兰兰想</p>
+                        <p>让绘画变得更简单</p>
+
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-good_drawing" role="tabpanel" aria-labelledby="nav-good_drawing">
+                        <br>
+                        <a href="./drawing/">点击进入欣赏作品界面</a>
+
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function PreviewText() {
+        var oFReader = new FileReader();
+        oFReader.readAsDataURL(document.getElementById("import_draw_data").files[0]);
+        oFReader.onload = function (oFREvent) {
+            var temp_String = oFREvent.target.result.split(',');
+
+            document.getElementById("draw_data").value = atob(temp_String[1]);
+            import_draw_data();
+            hide_moremodal();
+
+        };
+    };
+</script>
+<script>
+    var canvasHistory = [];
+    var step = -1;
+    var paint;
+    var lineWidth = 5;
+    var Bcolor = "#000";
+    var shadow_color = "#000";
+    var shadow_x = "";
+    var shadow_y = "";
+    var shadow_blur = "";
+    var shadow_turnedon = 0;//0未开启，1开启
+
+    var end_draw = new Array();
+
+    var ws = new WebSocket('ws://192.168.1.116:8080');
+    ws.onopen = function () {
+        console.log('ws onopen');
+
+    };
+    ws.onmessage = function (e) {
+        console.log('ws onmessage');
+        console.log('from server: ' + e.data);
+        const data = e.data;
+
+        var raw_data = data;
+
+        var newdata_array = raw_data.split(split_character);
+        clickX = newdata_array[0].split(',');
+        clickY = newdata_array[1].split(',');
+        bursh_SIZE = newdata_array[2].split(',');
+        bursh_color = newdata_array[3].split(',');
+        //start_draw_time=newdata_array[4].split(',');
+        dragging = newdata_array[4].split(',');
+        end_drraw = newdata_array[5].split(',');
+
+        if (newdata_array.length > 6) {
+
+
+            push_null(newdata_array[6].split(','), bursh_color);
+            push_null(newdata_array[7].split(','), bursh_shadow_blur);
+            push_null(newdata_array[8].split(','), bursh_shadow_x);
+            push_null(newdata_array[9].split(','), bursh_shadow_y);
+            shadow_turnedon = 1;
+        }
+        replay_canvas();
+    };
+
+    function start() {
+
+        brush_size = document.getElementById("brush-size");
+        brush_S = document.getElementById('brush_S');
+        brush_Color = document.getElementById('B_color');
+
+        shadow_blur = document.getElementById('brush_shadow_blur').value;
+        shadow_color = document.getElementById('shadow_color').value;
+        shadow_x = document.getElementById('brush_shadow_x').value;
+        shadow_y = document.getElementById('brush_shadow_y').value;
+
+
+        brush_size.oninput = function () {
+            document.getElementById('brush_S').value = brush_size.value;
+            lineWidth = brush_size.value;
+
+
+        };
+
+        brush_S.oninput = function () {
+            if (brush_S.value == "") {
+                brush_S.value = 5;
+            }
+
+            if (brush_S.value > 80) {
+                document.getElementById('brush-size').setAttribute("max", brush_S.value);
+                document.getElementById('brush-size').value = brush_S.value;
+
+            } else {
+                document.getElementById('brush-size').setAttribute("max", 80);
+                document.getElementById('brush-size').value = brush_S.value;
+            }
+
+            brush_size.value = brush_S.value;
+            console.log(brush_size.value);
+            lineWidth = brush_size.value;
+
+        };
+
+        brush_Color.onchange = function () {
+            Bcolor = brush_Color.value;
+            console.log(Bcolor);
+
+
+        };
+
+        var brush_shadow_color = document.getElementById('shadow_color');
+        var brush_shadow_blur = document.getElementById('brush_shadow_blur');
+        var brush_shadow_x = document.getElementById('brush_shadow_x');
+        var brush_shadow_y = document.getElementById('brush_shadow_y');
+
+        brush_shadow_color.oninput = function () {
+            shadow_color = brush_shadow_color.value;
+            shadow_turnedon = 1;
+            console.log("brush_shadow_color:" + shadow_color);
+        }
+        brush_shadow_blur.oninput = function () {
+            shadow_blur = brush_shadow_blur.value;
+            shadow_turnedon = 1;
+            console.log("brush_shadow_blur:" + shadow_blur);
+        }
+
+        brush_shadow_x.oninput = function () {
+            shadow_x = brush_shadow_x.value;
+            shadow_turnedon = 1;
+            console.log("shadow_x:" + shadow_x)
+        }
+
+        brush_shadow_y.oninput = function () {
+            shadow_y = brush_shadow_y.value;
+            shadow_turnedon = 1;
+            console.log("shadow_y:" + shadow_y);
+        }
+
+
+        document.getElementById("canvavas").setAttribute("style", "width:" + (window.innerWidth - 50) + "px;margin:auto");
+        var canvas = document.getElementById("canvadrawing");
+
+        var cvx = canvas.getContext('2d');
+        canvas.width = window.innerWidth - 50;
+        canvas.height = window.innerHeight - 50;
+
+
+        cvx.shadowBlur = 1;
+        cvx.lineCap = "round";
+        cvx.lineJoin = "round";
+
+
+        canvas.addEventListener("touchstart", function (e) {
+            paint = 1;
+
+
+            //redraw();
+            cvx.lineWidth = lineWidth;
+            var brush_selection = document.getElementById("brush_select").value;
+            if (brush_selection == "彩虹画笔") {
+                Bcolor = "rgb(" + num_return(255) + "," + num_return(255) + "," + num_return(255) + ")";
+                document.getElementById("B_color").value = "#" + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[0]).toString(16) + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[1]).toString(16) + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[2]).toString(16);
+            }
+            cvx.strokeStyle = Bcolor;
+
+            cvx.shadowBlur = shadow_blur;
+            cvx.shadowColor = shadow_color;
+            cvx.shadowOffsetX = shadow_x;
+            cvx.shadowOffsetY = shadow_y;
+            // addsome
+            addClick(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY, paint);
+            cvx.moveTo(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY);
+            cvx.beginPath();
+            end_draw.push(0);
+            //record_time();
+        });
+
+        canvas.addEventListener("touchend", function (e) {
+            step++;
+            if (step < canvasHistory.length) {
+                canvasHistory.length = step; // 截断数组
+            }
+
+            canvasHistory.push(canvas.toDataURL());
+            paint = 0;
+
+        });
+
+        canvas.addEventListener("touchleave", function (e) {
+            paint = 0;
+            addClick(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY, paint);
+            end_draw.push(null);
+        });
+        canvas.addEventListener("touchcancel", function (e) {
+            paint = 0;
+            addClick(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY, paint);
+            end_draw.push(null);
+        });
+        canvas.addEventListener("touchend", function (e) {
+            paint = 0;
+            addClick(clickX[clickX.length - 1], clickY[clickY.length - 1], paint);
+            end_draw.push(null);
+        });
+
+        canvas.addEventListener("touchmove", function (e) {
+            e.preventDefault();
+            if (paint == 1) {
+                addClick(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY - canvas.getBoundingClientRect().top, paint);
+                end_draw.push(null);
+                //redraw();
+                cvx.lineTo(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY - canvas.getBoundingClientRect().top);
+                cvx.stroke();//绘制线条
+            }
+
+        });
+
+
+        $('canvas').mousedown(function (e) {
+
+            paint = 1;
+            cvx.lineWidth = lineWidth;
+
+            var brush_selection = document.getElementById("brush_select").value;
+            if (brush_selection == "彩虹画笔") {
+                Bcolor = "rgb(" + num_return(255) + "," + num_return(255) + "," + num_return(255) + ")";
+                document.getElementById("B_color").value = "#" + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[0]).toString(16) + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[1]).toString(16) + parseInt(Bcolor.split("(")[1].split(")")[0].split(",")[2]).toString(16);
+            }
+            cvx.strokeStyle = Bcolor;
+
+            cvx.shadowBlur = shadow_blur;
+            cvx.shadowColor = shadow_color;
+            cvx.shadowOffsetX = shadow_x;
+            cvx.shadowOffsetY = shadow_y;
+            //addsome
+            addClick(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top - canvas.getBoundingClientRect().top, paint);
+            //redraw();
+            cvx.moveTo(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top - canvas.getBoundingClientRect().top);
+            cvx.beginPath();
+            //record_time();
+            end_draw.push(0);
+        });
+        $('canvas').mousemove(function (e) {
+            if (paint == 1) {
+                cvx.lineTo(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
+                cvx.stroke();//绘制线条
+
+                addClick(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top, paint);
+                //redraw();
+                end_draw.push(null);
+
+            }
+        });
+        $('canvas').mouseup(function (e) {
+
+            step++;
+            if (step < canvasHistory.length) {
+                canvasHistory.length = step; // 截断数组
+            }
+
+            canvasHistory.push(canvas.toDataURL());
+            /*鼠标抬起，增加步数，
+            如果 步数 小于 画布历史数组长度， 那么画布历史数组长度=步数;
+            这样就能进行数组长度比较能撤销多少次了
+            画布历史数组 增加一个元素 现在canvas 的快照
+
+            本代码来自一个博客。。我忘记链接了
+            */
+
+            //time_push();
+            end_draw.push(null);
+            paint = 0;
+            addClick(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top, paint);
+            //cleanArray();
+        });
+        $('canvas').mouseleave(function (e) {
+            paint = 0;
+            //addClick(e.clientX - canvas.getBoundingClientRect().left,e.clientY - canvas.getBoundingClientRect().top,paint);
+            //cleanArray();
+        });
+
+
+    }
+
+    //定义数组addsome
+    var clickX = new Array();
+    var clickY = new Array();
+    var dragging = new Array();
+    var draw_time = new Array();
+    var bursh_SIZE = new Array();
+    var bursh_color = new Array();
+
+    var bursh_shadow_color = new Array();
+    var bursh_shadow_blur = new Array();
+    var bursh_shadow_x = new Array();
+    var bursh_shadow_y = new Array();
+
+    function array_splice(arr, start_num) {
+        arr.splice(start_num, arr.length - start_num);
+        console.log(arr);
+    }
+
+    //addsome 变量们
+    var arrary_arr = [bursh_color, bursh_SIZE, bursh_shadow_blur, bursh_shadow_color, bursh_shadow_x, bursh_shadow_y, end_draw];
+
+    function find_lastindex() {
+
+        var last_index = 0;
+
+        for (var j = arrary_arr.length - 1; j >= 0; j--) {
+            for (var i = bursh_color.length - 1; i >= 0; i--) {//这里的bursh_color是任意选的一个,因为所有数组长度相同
+                if (arrary_arr[j][i] != null) {
+                    if (i > last_index) {
+                        last_index = i;
+                    }
+                    break;
+                }
+            }
+        }
+        return last_index;
+    }
+
+    function canvasUndo() {
+        var canvas = document.getElementById("canvadrawing");
+
+        var ctx = canvas.getContext('2d');
+
+
+        /*当步数大于等于0，撤销功能，
+        减去步数；清空画布，
+        然后变量 canvaspic 新 图像，
+        canvaspic的链接为 step--过后的 step（在canvashistroy数组中）
+
+        */
+        if (step >= 0) {
+            step--;
+
+            //
+            var last_index = find_lastindex();
+            for (var cc = 0; cc < arrary_arr.length; cc++) {
+                array_splice(arrary_arr[cc], last_index);
+            }
+            array_splice(clickX, last_index);
+            array_splice(clickY, last_index);
+            array_splice(dragging, last_index);
+            temp_color = "";
+            temp_size = "";
+            temp_shadow_blur = null;
+            temp_shadow_color = null;
+            temp_shadow_x = null;
+            temp_shadow_y = null;
+
+            clean();
+
+            let canvasPic = new Image();
+            canvasPic.src = canvasHistory[step];
+            canvasPic.addEventListener('load', function () {
+                ctx.drawImage(canvasPic, 0, 0);
+            });
+
+        } else {
+            console.log('不能再继续撤销了');
+        }
+
+    }
+
+    function canvasRedo() {
+
+        var canvas = document.getElementById("canvadrawing");
+
+        var ctx = canvas.getContext('2d');
+
+        if (step < canvasHistory.length - 1) {
+            step++;
+            let canvasPic = new Image();
+            canvasPic.src = canvasHistory[step];
+            canvasPic.addEventListener('load', function () {
+                clean();
+                ctx.drawImage(canvasPic, 0, 0);
+
+            });
+        } else {
+            console.log('已经是最新的记录了');
+        }
+    }
+
+    var start_draw_time = new Array();
+
+    function record_time() {
+        var starttime = new Date();
+        start_draw_time.push(starttime.getTime());
+    }
+
+    function time_push() {
+        var nowtime = new Date();
+        var realtime = nowtime.getTime() - start_draw_time[start_draw_time.length - 1];
+        draw_time.push(realtime);
+    }
+
+    function num_return(num) {
+        var random_num = Math.random();
+
+        var temp = Math.round(random_num * num);
+        if (temp >= 255) {
+            temp = 255;
+        }
+        return temp;
+    }
+
+    function addClick(x, y, drag) {
+        clickX.push(x);
+        clickY.push(y);
+        dragging.push(drag);
+
+        var burshsize = brush_S.value;
+
+        var burshcolor = brush_Color.value;
+
+        if (shadow_color != temp_shadow_color) {
+            temp_shadow_color = shadow_color;
+            bursh_shadow_color.push(shadow_color);
+        } else {
+            bursh_shadow_color.push(null);
+        }
+
+        if (shadow_blur != temp_shadow_blur) {
+            temp_shadow_blur = shadow_blur;
+            bursh_shadow_blur.push(shadow_blur);
+        } else {
+            bursh_shadow_blur.push(null);
+        }
+
+        if (shadow_x != temp_shadow_x) {
+            temp_shadow_x = shadow_x;
+            bursh_shadow_x.push(shadow_x);
+        } else {
+            bursh_shadow_x.push(null);
+        }
+
+        if (shadow_y != temp_shadow_y) {
+            temp_shadow_y = shadow_y;
+            bursh_shadow_y.push(shadow_y);
+        } else {
+            bursh_shadow_y.push(null);
+        }
+
+
+        if (burshsize != temp_size) {
+            temp_size = burshsize;
+            bursh_SIZE.push(burshsize);
+        } else {
+            bursh_SIZE.push(null);
+        }
+
+        if (burshcolor != temp_color) {
+            temp_color = burshcolor;
+            bursh_color.push(burshcolor);
+        } else {
+            bursh_color.push(null);
+        }
+
+        ws.send(
+            clickX + split_character +
+            clickY + split_character +
+            bursh_SIZE + split_character +
+            bursh_color + split_character +
+            dragging + split_character +
+            end_draw
+        )
+
+
+    }
+
+    //tracking lanhaoo.club
+    //I learned this code from William Malone's blog, and I wrote some other code...
+    // do not copy, try to wrote your own code ! LanHao
+
+    function cleanArray() {
+        clickX.shift();
+        clickY.shift();
+
+        document.getElementById("arrayX").innerHTML = clickX.toString();
+        document.getElementById("arrayY").innerHTML = clickY.toString();
+        document.getElementById("arrayDRAG").innerHTML = dragging.toString();
+        document.getElementById("arrayTime").innerHTML = draw_time.toString();
+        console.log("cleaned_Array");
+        console.log(clickX);
+    }
+
+    function clean() {
+        var canvas = document.getElementById("canvadrawing");
+        var cvx = canvas.getContext('2d');
+        cvx.clearRect(0, 0, window.innerWidth - 50, window.innerHeight - 50);
+        //清理数组 addsome
+        /*			clickX=new Array();
+                    clickY=new Array();
+                    dragging=new Array();
+                    draw_time=new Array();
+                    start_draw_time=new Array();
+                    bursh_color=new Array();
+                    bursh_SIZE=new Array();
+
+                    bursh_shadow_color=new Array();
+                    bursh_shadow_blur=new Array();
+                    bursh_shadow_x=new Array();
+                    bursh_shadow_y=new Array();*/
+
+        console.log("cleaned");
+    }
+
+    function bigbutton() {
+        lineWidth++;
+
+        console.log(lineWidth);
+    }
+
+    function smallbutton() {
+        if (lineWidth > 1) {
+            lineWidth--;
+
+            console.log(lineWidth);
+        } else {
+            window.alert("已经是最小画笔了");
+        }
+    }
+
+    var check = 0;
+    var shadow_replay = false;
+
+    function replay_canvas() {
+        var canvas = document.getElementById("canvadrawing");
+        var cvx = canvas.getContext('2d');
+
+        cvx.clearRect(0, 0, window.innerWidth - 50, window.innerHeight - 50);
+
+
+        for (let ii = 0; ii < clickX.length; ii++) {
+                redraw(ii);
+        }
+
+//			if(shadow_turnedon==1){
+//				//如果阴影功能打开需要再次重绘覆盖阴影断点，我是个天才吧哈哈哈
+//				//否定，覆盖图层错误
+//				shadow_replay=true;
+//					for(let jj=0;jj<clickX.length;jj++){
+//						setTimeout(function(){redraw(jj);},0);
+//					}
+//			}
+
+    }
+
+    //addsome
+    var temp_color = "";
+    var temp_size = "";
+    var temp_shadow_blur = null;
+    var temp_shadow_color = null;
+    var temp_shadow_x = null;
+    var temp_shadow_y = null;
+
+    function redraw(i) {
+
+        var canvas = document.getElementById("canvadrawing");
+        var cvx = canvas.getContext('2d');
+
+        if (bursh_color[i] != null) {
+            temp_color = bursh_color[i];
+        }
+
+        if (bursh_SIZE[i] != "") {
+            temp_size = bursh_SIZE[i];
+        }
+
+        if (bursh_shadow_blur[i] != null) {
+            temp_shadow_blur = bursh_shadow_blur[i];
+        }
+        if (bursh_shadow_color[i] != null) {
+            temp_shadow_color = bursh_shadow_color[i];
+        }
+        if (bursh_shadow_x[i] != null) {
+            temp_shadow_x = bursh_shadow_x[i];
+        }
+        if (bursh_shadow_y[i] != null) {
+            temp_shadow_y = bursh_shadow_y[i];
+        }
+        cvx.shadowBlur = temp_shadow_blur;
+        cvx.shadowColor = temp_shadow_color;
+        cvx.shadowOffsetX = temp_shadow_x;
+        cvx.shadowOffsetY = temp_shadow_y;
+
+
+        cvx.strokeStyle = temp_color;
+        cvx.lineWidth = temp_size;
+        cvx.beginPath();
+        if (dragging[i - 1] == 1) {
+            cvx.moveTo(clickX[i - 1], clickY[i - 1]);
+            //如果 dragging上为真，则取数组上一个，连到下一个。
+        }
+
+        cvx.lineTo(clickX[i], clickY[i]);
+        cvx.closePath();
+
+        cvx.stroke();
+
+
+    }
+
+    var split_character = "@";
+    //config 不能是井号，会和色标冲突
+    //todo 添加color picker！！
+    function export_draw_data() {
+        var there_shadow = false;
+        for (var tt = 0; tt < bursh_shadow_x.length; tt++) {
+            if (bursh_shadow_x[tt] != null) {
+                there_shadow = true;
+                break;
+            }
+            if (bursh_shadow_y[tt] != null) {
+                there_shadow = true;
+                break;
+            }
+        }
+
+        var draw_data = clickX + split_character
+            + clickY + split_character
+            + bursh_SIZE + split_character
+            + bursh_color + split_character
+            //+start_draw_time+split_character
+            + dragging + split_character
+            + end_draw + split_character
+            + "！我的绘画数据--兰兰想的魔法画板，\n 更多-粘贴数据-导入，查看绘画！https://lanhaoo.club/lab/drawing.html";
+        if (there_shadow) {
+
+            draw_data = draw_data + split_character
+                + bursh_shadow_color + split_character
+                + bursh_shadow_blur + split_character
+                + bursh_shadow_x + split_character
+                + bursh_shadow_y + split_character;
+        }
+        console.log(draw_data);
+        var timestamp = Number(new Date());
+        var date = new Date(timestamp);
+        var blob = new Blob([draw_data], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "绘画数据" + date + ".txt");
+        document.getElementById("draw_data").value = draw_data;
+
+
+    }
+
+    function push_null(array, push_to_array) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] == "") {
+                push_to_array.push(null);
+            } else {
+                push_to_array.push(array[i]);
+            }
+        }
+    }
+
+    //tracking, Code Author: LanHao
+    //https://lanhaoo.club/lab/drawing.html
+    function import_draw_data() {
+        var raw_data = document.getElementById("draw_data").value;
+
+        var newdata_array = raw_data.split(split_character);
+        clickX = newdata_array[0].split(',');
+        clickY = newdata_array[1].split(',');
+        bursh_SIZE = newdata_array[2].split(',');
+        bursh_color = newdata_array[3].split(',');
+        //start_draw_time=newdata_array[4].split(',');
+        dragging = newdata_array[4].split(',');
+        end_drraw = newdata_array[5].split(',');
+
+        if (newdata_array.length > 6) {
+
+
+            push_null(newdata_array[6].split(','), bursh_color);
+            push_null(newdata_array[7].split(','), bursh_shadow_blur);
+            push_null(newdata_array[8].split(','), bursh_shadow_x);
+            push_null(newdata_array[9].split(','), bursh_shadow_y);
+            shadow_turnedon = 1;
+        }
+
+        /*			var dragging_raw_data=newdata_array[5].split(',');//需转换成boolean
+                    dragging=new Array();
+                    for(let i=0;i<dragging_raw_data.length;i++){
+                        if(dragging_raw_data[i]=="true"){
+                            dragging.push(true);
+                        }else{
+                            dragging.push(false);
+                        }
+                    }*/
+
+
+        replay_canvas();
+
+        console.log("导入成功！");
+    }
+
+    function save_img() {
+        var file_name = "png";
+//			var checked=document.getElementById("is_transparent").checked;
+//			console.log(checked);
+//
+//			if(!checked){
+//				file_name="jpg";
+//			}
+        var canvas = document.getElementById("canvadrawing");
+        canvas.toBlob(function (blob) {
+            saveAs(blob, "绘画图像." + file_name);
+        });
+    }
+
+
+    var arr_origin_color = new Array();
+    var arr_random_color = new Array();
+    var firstchange = true;
+
+    function change_color_style() {
+        var style_selection = document.getElementById("random_color").value;
+        console.log(style_selection);
+        if (firstchange) {
+            arr_origin_color = bursh_color.slice();
+            ;
+            console.log("已记录");
+        }
+
+
+        if (style_selection == "恢复原状") {
+            for (var i = 0; i < bursh_color.length; i++) {
+                if (bursh_color[i] != null) {
+                    bursh_color[i] = arr_origin_color[i];
+                }
+            }
+
+            replay_canvas();
+
+        } else if (style_selection == "完全随机") {
+
+            for (var i = 0; i < bursh_color.length; i++) {
+                if (bursh_color[i] != null) {
+                    bursh_color[i] = "#" + num_return(255).toString(16) + num_return(255).toString(16) + num_return(255).toString(16);
+
+                }
+            }
+            replay_canvas();
+        } else if (style_selection == "清新风格") {
+
+            for (var i = 0; i < bursh_color.length; i++) {
+                if (bursh_color[i] != null) {
+                    bursh_color[i] = "#" + num_return(300).toString(16) + num_return(255).toString(16) + num_return(500).toString(16);
+                }
+            }
+            replay_canvas();
+        } else if (style_selection == "复古旧派") {
+
+            for (var i = 0; i < bursh_color.length; i++) {
+                if (bursh_color[i] != null) {
+                    bursh_color[i] = "#" + num_return(155).toString(16) + num_return(155).toString(16) + num_return(155).toString(16);
+                }
+            }
+            replay_canvas();
+        }
+
+        firstchange = false;
+
+    }
+
+
+    //保存图片
+    /*	btnSave.addEventListener('click',function(){
+            var imgData = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            var filename = '图片.png';
+            saveFile(imgData,filename);
+            this.classList.add('dis');
+
+        })
+
+        var saveFile = function(data, filename) {
+            var save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+            save_link.href = data;
+            save_link.download = filename;
+            var event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            save_link.dispatchEvent(event);
+        };
+            */
+
+    function hide_moremodal() {
+        $('#more_Modal').modal('hide');
+    }
+
+    function show_alert_success_export() {
+        $('#alert_export_success').attr('class', 'alert alert-warning fade show');
+    }
+
+    function openModal() {
+        $('#alert_export_success').attr('class', 'alert alert-warning collapse fade');
+        document.getElementById("draw_data").value = "";
+        $('#more_Modal').modal('show');
+    }
+
+</script>
