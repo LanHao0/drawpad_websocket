@@ -225,7 +225,7 @@
 
     var end_draw = new Array();
 
-    var ws = new WebSocket('ws://192.168.1.116:8080');
+    var ws = new WebSocket('ws://192.168.1.106:8083');
     ws.onopen = function () {
         console.log('ws onopen');
 
@@ -247,8 +247,6 @@
         end_drraw = newdata_array[5].split(',');
 
         if (newdata_array.length > 6) {
-
-
             push_null(newdata_array[6].split(','), bursh_color);
             push_null(newdata_array[7].split(','), bursh_shadow_blur);
             push_null(newdata_array[8].split(','), bursh_shadow_x);
@@ -379,7 +377,8 @@
 
             canvasHistory.push(canvas.toDataURL());
             paint = 0;
-
+            addClick(clickX[clickX.length - 1], clickY[clickY.length - 1], paint);
+            end_draw.push(null);
         });
 
         canvas.addEventListener("touchleave", function (e) {
@@ -390,11 +389,6 @@
         canvas.addEventListener("touchcancel", function (e) {
             paint = 0;
             addClick(e.touches[0].pageX - canvas.getBoundingClientRect().left, e.touches[0].pageY, paint);
-            end_draw.push(null);
-        });
-        canvas.addEventListener("touchend", function (e) {
-            paint = 0;
-            addClick(clickX[clickX.length - 1], clickY[clickY.length - 1], paint);
             end_draw.push(null);
         });
 
@@ -654,14 +648,15 @@
             bursh_color.push(null);
         }
 
-        ws.send(
-            clickX + split_character +
-            clickY + split_character +
-            bursh_SIZE + split_character +
-            bursh_color + split_character +
-            dragging + split_character +
-            end_draw
-        )
+        ws.send(JSON.stringify({
+            clickX:clickX,
+            clickY:clickY,
+            brushSize:bursh_SIZE,
+            brushColor:bursh_color,
+            dragging:dragging,
+            end_draw:end_draw,
+            split_character:split_character
+        }));
 
 
     }
@@ -728,7 +723,6 @@
 
         cvx.clearRect(0, 0, window.innerWidth - 50, window.innerHeight - 50);
 
-
         for (let ii = 0; ii < clickX.length; ii++) {
                 redraw(ii);
         }
@@ -785,6 +779,7 @@
 
         cvx.strokeStyle = temp_color;
         cvx.lineWidth = temp_size;
+
         cvx.beginPath();
         if (dragging[i - 1] == 1) {
             cvx.moveTo(clickX[i - 1], clickY[i - 1]);
@@ -866,8 +861,6 @@
         end_drraw = newdata_array[5].split(',');
 
         if (newdata_array.length > 6) {
-
-
             push_null(newdata_array[6].split(','), bursh_color);
             push_null(newdata_array[7].split(','), bursh_shadow_blur);
             push_null(newdata_array[8].split(','), bursh_shadow_x);
